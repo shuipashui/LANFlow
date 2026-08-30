@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#102a43">
+  <meta name="description" content="在同一局域网内快速浏览、下载与发送文件">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css?v=0.6.3">
+  <title>LANFlow</title>
+</head>
+<body>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-mark">L</span><span>LAN<b>Flow</b></span></a>
+    <div class="top-actions"><button id="accessSettingsButton" class="top-action-button hidden">访问设置</button><button id="stopServiceButton" class="top-action-button danger hidden">结束服务</button><div class="connection"><span class="status-dot"></span><span id="connectionText">正在连接</span></div></div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">局域网文件助手</p>
+        <h1>文件互传，<em>简单一点</em></h1>
+        <p class="hero-copy">无需注册，不经过云端。同一 Wi-Fi 或热点下，打开网页就能收发文件。</p>
+      </div>
+      <aside class="address-card">
+        <div><span class="card-label">其他设备访问此地址</span><strong id="primaryAddress">当前页面地址</strong><button class="text-button" id="copyAddress">复制地址</button></div>
+        <div class="inline-qr-frame"><img id="inlineQr" alt="局域网访问二维码"></div>
+      </aside>
+    </section>
+
+    <nav class="tabs" aria-label="主要功能">
+      <button class="tab active" data-view="send">闪传</button>
+      <button class="tab" data-view="files">共享空间</button>
+      <button class="tab" data-view="inbox">接收记录 <span id="inboxCount" class="badge hidden">0</span></button>
+    </nav>
+
+    <section id="sendView" class="view active">
+      <div class="section-heading"><div><p class="kicker">快速发送</p><h2>选择接收位置</h2></div><p id="deviceSummary">正在连接…</p></div>
+      <div class="send-workspace">
+        <div id="devices" class="device-grid"></div>
+        <div class="dropzone" id="dropzone">
+          <input id="fileInput" type="file" accept="*/*" multiple>
+          <input id="documentInput" type="file" accept="application/*" multiple>
+          <input id="mediaInput" type="file" accept="image/*,video/*" multiple>
+          <span class="upload-icon desktop-only">↗</span>
+          <strong class="desktop-only">把文件拖到这里</strong>
+          <button id="mobileSendButton" class="mobile-send-button" type="button"><span class="mobile-upload-icon">↗</span><span class="mobile-send-copy"><b>发送文件</b></span></button>
+          <span class="desktop-only">或点击选择文件，可一次发送多个</span>
+        </div>
+      </div>
+      <div id="uploadQueue" class="upload-queue"></div>
+    </section>
+
+    <section id="filesView" class="view">
+      <div class="section-heading"><div><p class="kicker">长期共享</p><h2>共享空间</h2></div><div class="heading-actions"><button id="addSharedFolderButton" class="quiet-button hidden">添加共享文件夹</button><button id="libraryUploadButton" class="quiet-button">上传文件</button><button id="refreshFiles" class="quiet-button">刷新</button><input id="libraryFileInput" type="file" accept=".pdf,.txt,.md,.log,.csv,.json,.xml,.yaml,.yml,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z,.tar,.gz,.apk,.epub,.mobi,.mp3,.wav,.flac,.m4a,.aac,.ogg,application/*,text/*,audio/*" multiple hidden></div></div>
+      <div class="library-help"><span>共享文件不必复制到项目里</span><small>电脑点击“添加共享文件夹”即可共享原位置；也可以上传单个文件。其他设备只能浏览、预览和保存。</small></div>
+      <div id="sharedFolderList" class="shared-folder-list hidden"></div>
+      <div id="breadcrumbs" class="breadcrumbs"></div>
+      <div id="fileList" class="file-list"><div class="empty">正在读取共享目录…</div></div>
+    </section>
+
+    <section id="inboxView" class="view">
+      <div class="section-heading"><div><p class="kicker">INCOMING</p><h2>接收记录</h2></div><div class="heading-actions"><button id="openInboxButton" class="quiet-button hidden">打开接收箱目录</button></div></div>
+      <div class="inbox-saved-note"><span>已保存到电脑</span><small>发送到“主机收件箱”的文件保存在 <b>data/inbox</b>，不会自动删除；临时闪传文件会在 24 小时后清理。</small></div>
+      <div id="inboxList" class="file-list"><div class="empty">收到的文件会出现在这里</div></div>
+    </section>
+  </main>
+
+  <dialog id="fileSourceDialog" class="source-dialog">
+    <div class="source-sheet">
+      <div><p class="kicker">选择来源</p><h2>发送文件</h2><p>从文件管理器选择任意文件，或直接打开系统相册。</p></div>
+      <button id="sourceFilesButton" class="source-option" type="button"><span>▤</span><b>文件管理器</b><small>文档、压缩包、安装包等</small></button>
+      <button id="sourceMediaButton" class="source-option" type="button"><span>▧</span><b>相册</b><small>图片与视频，可多选</small></button>
+      <button class="source-cancel" type="button" data-close-dialog="fileSourceDialog">取消</button>
+    </div>
+  </dialog>
+
+  <dialog id="authDialog">
+    <form id="authForm" method="dialog">
+      <span class="brand-mark large">L</span><h2>进入 LANFlow</h2><p>这台设备启用了局域网访问口令。</p>
+      <input id="accessCode" type="password" inputmode="numeric" autocomplete="current-password" placeholder="输入访问口令" required>
+      <p id="authError" class="error"></p><button class="primary-button" type="submit">继续</button>
+    </form>
+  </dialog>
+  <dialog id="settingsDialog" class="utility-dialog">
+    <form id="settingsForm" class="settings-form">
+      <button type="button" class="dialog-close" data-close-dialog="settingsDialog" aria-label="关闭">×</button>
+      <p class="kicker">安全设置</p><h2>局域网访问口令</h2>
+      <p id="settingsStatus">未启用时，同一局域网内的设备可直接访问。</p>
+      <label class="field-label" for="newAccessCode">新访问口令</label>
+      <input id="newAccessCode" type="password" autocomplete="new-password" maxlength="64" placeholder="留空表示不修改，至少 4 位">
+      <label class="field-label" for="autoStopMinutes">自动断开服务</label>
+      <select id="autoStopMinutes"><option value="30">30 分钟后</option><option value="60">1 小时后（默认）</option><option value="120">2 小时后</option><option value="240">4 小时后</option><option value="0">永不自动断开</option></select>
+      <p id="settingsError" class="error"></p>
+      <button class="primary-button" type="submit">保存设置</button>
+      <button id="clearAccessCode" class="secondary-button" type="button">关闭访问口令</button>
+    </form>
+  </dialog>
+  <dialog id="previewDialog" class="utility-dialog preview-dialog">
+    <div class="dialog-shell preview-shell">
+      <header><div><p class="kicker">文件预览</p><h2 id="previewName">文件</h2></div><button class="dialog-close" data-close-dialog="previewDialog" aria-label="关闭">×</button></header>
+      <div id="previewBody" class="preview-body"></div>
+      <div class="preview-actions"><span id="previewMeta"></span><a id="previewDownload" class="primary-button inline-button" href="#" download>保存到设备</a></div>
+    </div>
+  </dialog>
+  <div id="toast" class="toast" role="status"></div>
+  <script type="module" src="/app.js?v=0.6.3"></script>
+</body>
+</html>

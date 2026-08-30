@@ -1,0 +1,19 @@
+{
+  "name": "lanflow",
+  "version": "0.6.3",
+  "private": true,
+  "description": "A portable LAN file hub for browsing, previewing and sending files between devices.",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "qrcode-generator": "2.0.4"
+  }
+}
